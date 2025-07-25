@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  boardroom-hub:
+    image: hub-boardroom-tee:latest
+    container_name: boardroom-hub
+    
+    # SecretVM Verifiable Message Signing
+    volumes:
+      - ./crypto/docker_private_key_ed25519.pem:/app/crypto/privkey.pem
+      - ./crypto/docker_public_key_ed25519.pem:/app/crypto/pubkey.pem
+      - ./crypto/docker_attestation_ed25519.txt:/app/crypto/quote.txt
+      
+      # Data persistence
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config:/app/config
+    
+    ports:
+      - "8080:8080"      # Main API
+      - "29343:29343"    # Attestation endpoint
+    
+    environment:
+      - HUB_MODEL_NAME=meta-llama/Llama-3.2-1B-Instruct
+      - HUB_MAX_MEMORY_MB=3000
+    
+    # Resource limits for medium instance
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    restart: unless-stopped
+    
+    networks:
+      - boardroom-network
+
+networks:
+  boardroom-network:
+    driver: bridge

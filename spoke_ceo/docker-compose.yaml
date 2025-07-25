@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  ceo-agent:
+    image: spoke-ceo-boardroom-tee:latest
+    container_name: boardroom-ceo-agent
+    
+    # SecretVM Verifiable Message Signing
+    volumes:
+      - ./crypto/docker_private_key_ed25519.pem:/app/crypto/privkey.pem
+      - ./crypto/docker_public_key_ed25519.pem:/app/crypto/pubkey.pem
+      - ./crypto/docker_attestation_ed25519.txt:/app/crypto/quote.txt
+      
+      # Agent data and configuration
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config:/app/config
+    
+    ports:
+      - "8084:8084"      # Agent API
+      - "29347:29343"    # Attestation endpoint
+    
+    environment:
+      - AGENT_TYPE=ceo
+      - AGENT_CLIENT_ID=${CLIENT_ID}
+      - HUB_ENDPOINT=${HUB_ENDPOINT:-https://hub:8080}
+      - HUB_ATTESTATION_ENDPOINT=${HUB_ATTESTATION_ENDPOINT:-https://hub:29343}
+      - AGENT_LOG_LEVEL=INFO
+      - AGENT_API_PORT=8084
+      - AGENT_ATTESTATION_PORT=29343
+      - STRATEGIC_MODEL_PATH=/app/models/strategic-llm
+      - ENABLE_MULTI_AGENT_ORCHESTRATION=true
+    
+    # Resource limits for large instance (premium tier)
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '2.0'
+          memory: 4G
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    restart: unless-stopped
+    
+    networks:
+      - boardroom-network
+
+networks:
+  boardroom-network:
+    driver: bridge
+    external: true

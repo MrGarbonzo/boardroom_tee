@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  finance-agent:
+    image: finance-boardroom-tee:latest
+    container_name: boardroom-finance-agent
+    
+    # SecretVM Verifiable Message Signing
+    volumes:
+      - ./crypto/docker_private_key_ed25519.pem:/app/crypto/privkey.pem
+      - ./crypto/docker_public_key_ed25519.pem:/app/crypto/pubkey.pem
+      - ./crypto/docker_attestation_ed25519.txt:/app/crypto/quote.txt
+      
+      # Agent data and configuration
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config:/app/config
+    
+    ports:
+      - "8081:8081"      # Agent API
+      - "29344:29343"    # Attestation endpoint
+    
+    environment:
+      - AGENT_TYPE=finance
+      - AGENT_CLIENT_ID=${CLIENT_ID}
+      - HUB_ENDPOINT=${HUB_ENDPOINT:-https://hub:8080}
+      - HUB_ATTESTATION_ENDPOINT=${HUB_ATTESTATION_ENDPOINT:-https://hub:29343}
+      - AGENT_LOG_LEVEL=INFO
+      - AGENT_API_PORT=8081
+      - AGENT_ATTESTATION_PORT=29343
+      - FINANCIAL_MODEL_PATH=/app/models/finance-llm
+    
+    # Resource limits for medium instance
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    restart: unless-stopped
+    
+    networks:
+      - boardroom-network
+
+networks:
+  boardroom-network:
+    driver: bridge
+    external: true
