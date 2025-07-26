@@ -23,16 +23,16 @@ jobs:
         component: [hub, finance, marketing]
         include:
           - component: hub
-            dockerfile: hub/Dockerfile
-            context: .
+            dockerfile: Dockerfile
+            context: hub
             image-name: hub
           - component: finance
-            dockerfile: spoke_finance/Dockerfile
-            context: .
+            dockerfile: Dockerfile
+            context: spoke_finance
             image-name: finance
           - component: marketing
-            dockerfile: spoke_marketing/Dockerfile
-            context: .
+            dockerfile: Dockerfile
+            context: spoke_marketing
             image-name: marketing
 
     steps:

@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN python -c "import os; os.environ['HF_HOME'] = '/app/models'; print('Hub model cache setup complete (mocked for development)')"
 
 # Copy source code
-COPY src/ /app/src/
+COPY ../src/ /app/src/
 
 # Create necessary directories
 RUN mkdir -p /app/data /app/logs /app/crypto /app/models /app/config
