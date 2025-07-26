@@ -2,10 +2,7 @@ version: '3.8'
 
 services:
   boardroom-hub:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: ghcr.io/your-org/boardroom-tee-hub:latest
+    image: ghcr.io/mrgarbonzo/boardroom-tee-hub:latest
     container_name: boardroom-hub-${CLIENT_ID:-default}
     
     # SecretVM Verifiable Message Signing (production)

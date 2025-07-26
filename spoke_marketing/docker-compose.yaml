@@ -2,10 +2,7 @@ version: '3.8'
 
 services:
   marketing-agent:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: ghcr.io/your-org/boardroom-tee-marketing:latest
+    image: ghcr.io/mrgarbonzo/boardroom-tee-marketing:latest
     container_name: marketing-agent-${CLIENT_ID:-default}
     
     # SecretVM Verifiable Message Signing (production)

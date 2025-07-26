@@ -2,10 +2,7 @@ version: '3.8'
 
 services:
   finance-agent:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: ghcr.io/your-org/boardroom-tee-finance:latest
+    image: ghcr.io/mrgarbonzo/boardroom-tee-finance:latest
     container_name: finance-agent-${CLIENT_ID:-default}
     
     # SecretVM Verifiable Message Signing (production)
