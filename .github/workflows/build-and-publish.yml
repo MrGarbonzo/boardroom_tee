@@ -23,15 +23,12 @@ jobs:
         component: [hub, finance, marketing]
         include:
           - component: hub
-            dockerfile: Dockerfile
             context: hub
             image-name: hub
           - component: finance
-            dockerfile: Dockerfile
             context: spoke_finance
             image-name: finance
           - component: marketing
-            dockerfile: Dockerfile
             context: spoke_marketing
             image-name: marketing
 
@@ -65,7 +62,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: ${{ matrix.context }}
-        file: ${{ matrix.dockerfile }}
+        file: ${{ matrix.context }}/Dockerfile
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
