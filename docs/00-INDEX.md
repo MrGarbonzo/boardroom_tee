@@ -12,8 +12,8 @@
 - **CEO Agent**: Phase 3 with SecretAI integration
 
 ### 🚀 Deployment Options
-- **Docker Deployment**: [`03-deployment/docker-deployment.md`](./03-deployment/docker-deployment.md)
-- **dstack TEE Platform**: [`03-deployment/dstack-deployment.md`](./03-deployment/dstack-deployment.md)
+- **Standalone VM Deployment**: [`03-deployment/docker-deployment.md`](./03-deployment/docker-deployment.md)
+- **Multi-VM TEE Platform**: [`03-deployment/dstack-deployment.md`](./03-deployment/dstack-deployment.md)
 
 ### 🔌 API Integration
 - **Complete API Specs**: [`04-apis/api-specifications.md`](./04-apis/api-specifications.md)
@@ -35,12 +35,14 @@ Spoke Agents → Specialized Analysis + Collaboration
 Results → Collaborative Intelligence
 ```
 
-### MVP Technology Stack (Phase 1)
-- **Hub**: Llama-3.2-1B-Instruct for data organization + orchestration
-- **Finance Agent**: AdaptLLM/Finance-LLM-7B (specialized financial model)
-- **Marketing Agent**: Mistral-7B-Instruct-v0.3 (general-purpose 7B model)
-- **Security**: SecretVM TEE with verifiable message signing
-- **Communication**: Attestation-verified agent-to-agent protocols
+### MVP Technology Stack (Phase 1) - Distributed Architecture
+- **Hub VM**: Llama-3.2-1B-Instruct for data organization + orchestration
+- **Finance VM**: AdaptLLM/Finance-LLM-7B (specialized financial model)
+- **Marketing VM**: Mistral-7B-Instruct-v0.3 (general-purpose 7B model)
+- **Security**: Cross-VM TEE with Verifiable Message Signing (VMS)
+- **Communication**: Direct spoke-to-spoke with hub coordination via VMS-signed messages
+- **Message Verification**: Every message cryptographically signed for verifiable AI provenance
+- **Deployment**: Each component = separate VM + separate GHCR image
 
 ### Future Phase Models
 - **Sales Agent**: Mistral-7B-Instruct-v0.3 (Phase 2)
@@ -50,36 +52,47 @@ Results → Collaborative Intelligence
 
 ## Component Dependencies
 
-### Hub Dependencies
+### Hub VM Dependencies
+- **VM Requirements**: 2 vCPU, 4GB RAM, 50GB storage
 - **Base Requirements**: Python 3.11, Transformers, FastAPI
 - **LLM Model**: meta-llama/Llama-3.2-1B-Instruct (3GB memory)
-- **Storage**: Expandable TB+ storage for client data
 - **Networking**: Port 8080 (API), 29343 (attestation)
-- **Security**: SecretVM TEE, verifiable message signing
+- **GHCR Image**: `ghcr.io/[org]/boardroom-tee-hub:latest`
+- **Security**: TEE isolation, cross-VM attestation
 
-### Agent Dependencies
-- **Shared Base**: All agents inherit from base agent framework
-- **Individual Models**: Each agent loads specialized LLM
-- **Hub Communication**: Must register with hub and maintain attestation
-- **Inter-Agent**: Direct attestation-verified communication capability
+### Spoke VM Dependencies
+- **VM Requirements**: 2 vCPU, 8GB RAM, 40GB storage each
+- **Standalone Apps**: Each spoke is completely self-contained
+- **Individual Models**: Each loads specialized LLM (Finance: AdaptLLM/7B, Marketing: Mistral/7B)
+- **Hub Communication**: Connects to hub via IP configuration in .env file
+- **GHCR Images**: 
+  - Finance: `ghcr.io/[org]/boardroom-tee-finance:latest`
+  - Marketing: `ghcr.io/[org]/boardroom-tee-marketing:latest`
 
-### Deployment Dependencies
-- **TEE Environment**: SecretVM or dstack platform
-- **Container Runtime**: Docker with TEE integration
-- **Networking**: Secure internal communication + external API access
-- **Storage**: Persistent volumes for data, logs, crypto keys
+### Multi-VM Deployment Dependencies
+- **TEE Environment**: Each VM runs SecretVM with full attestation verification
+- **Container Runtime**: Docker with SecretVM TEE integration on each VM
+- **Networking**: Cross-VM communication via public IP addresses
+- **Storage**: Persistent volumes per VM for data, logs, crypto keys
+- **Configuration**: Manual IP configuration via .env files
+- **VMS Keys**: Automatic ed25519 key generation per VM via SecretVM volume mounts
+- **Key Rotation**: Weekly key rotation with graceful transition
+- **Message Signing**: Every cross-VM message cryptographically signed
+- **Client Isolation**: Dedicated VM set (hub + spokes) per business client
+- **Independent Verification**: Clients can verify TEE integrity via port 29343 attestation endpoint
 
 ---
 
-## Implementation Sequence
+## Implementation Sequence - Standalone VM Architecture
 
-### MVP Phase 1: Core Foundation (Build First)
-1. **Hub Implementation** → Data ingestion + Llama-3.2-1B processing
-2. **Base Agent Framework** → Shared code for all agents
-3. **Finance Agent** → AdaptLLM specialized financial analysis
-4. **Marketing Agent** → Mistral-7B marketing intelligence
-5. **Agent-to-Agent Collaboration** → Finance ↔ Marketing communication
-6. **Campaign ROI Analysis** → Key collaboration use case
+### MVP Phase 1: Distributed Foundation (Build First)
+1. **Hub VM Application** → Standalone data ingestion + Llama-3.2-1B processing
+2. **Finance VM Application** → Standalone AdaptLLM specialized financial analysis
+3. **Marketing VM Application** → Standalone Mistral-7B marketing intelligence
+### 4. **Cross-VM Communication** → Dedicated VM sets with auto-discovery per business client
+5. **Hub Coordination** → Spoke directory and attestation verification
+6. **Client Isolation** → Complete VM-level separation per business (no shared infrastructure)
+7. **Campaign ROI Analysis** → Multi-VM collaboration use case with signed responses
 
 ### Phase 2: Expansion (Future)
 1. **Sales Agent** → Pipeline forecasting and lead optimization
@@ -136,25 +149,40 @@ Results → Collaborative Intelligence
 
 ## Configuration Quick Reference
 
-### MVP Environment Variables
+### MVP Environment Variables - Per VM Configuration
+
+**Hub VM (.env):**
 ```bash
-# Hub Configuration
 HUB_MODEL_NAME=meta-llama/Llama-3.2-1B-Instruct
 HUB_MAX_MEMORY_MB=3000
 HUB_API_PORT=8080
 HUB_ATTESTATION_PORT=29343
+CLIENT_ID=your-company
+# Spoke endpoints (configured after spoke deployment)
+FINANCE_ENDPOINT=http://[FINANCE_IP]:8081
+MARKETING_ENDPOINT=http://[MARKETING_IP]:8082
+```
 
-# Finance Agent (Specialized Financial Model)
+**Finance VM (.env):**
+```bash
 AGENT_TYPE=finance
 AGENT_MODEL_NAME=AdaptLLM/finance-LLM
 AGENT_API_PORT=8081
 AGENT_ATTESTATION_PORT=29344
+CLIENT_ID=your-company
+# Hub endpoint (configured during deployment)
+HUB_ENDPOINT=http://[HUB_IP]:8080
+```
 
-# Marketing Agent (General 7B Model)
+**Marketing VM (.env):**
+```bash
 AGENT_TYPE=marketing
 AGENT_MODEL_NAME=mistralai/Mistral-7B-Instruct-v0.3
 AGENT_API_PORT=8082
 AGENT_ATTESTATION_PORT=29345
+CLIENT_ID=your-company
+# Hub endpoint (configured during deployment)
+HUB_ENDPOINT=http://[HUB_IP]:8080
 ```
 
 ### MVP Port Allocation
@@ -166,11 +194,13 @@ AGENT_ATTESTATION_PORT=29345
 - **Sales**: 8083 (API), 29346 (attestation)
 - **CEO**: 8084 (API), 29347 (attestation)
 
-### MVP Resource Requirements (Phase 1)
-- **Hub**: 2 vCPU, 4GB RAM, TB+ storage
-- **Finance Agent**: 2 vCPU, 8GB RAM, 40GB storage (7B model)
-- **Marketing Agent**: 2 vCPU, 8GB RAM, 20GB storage (7B model)
-- **Total MVP**: 6 vCPU, 20GB RAM, 1TB+ storage
+### MVP Resource Requirements (Phase 1) - Per Client Deployment
+- **Hub VM**: 2 vCPU, 4GB RAM, 50GB storage
+- **Finance VM**: 2 vCPU, 8GB RAM, 40GB storage (7B model)
+- **Marketing VM**: 2 vCPU, 8GB RAM, 40GB storage (7B model)
+- **Per Client Total**: 3 VMs, 6 vCPU, 20GB RAM, 130GB storage
+- **Network**: Each VM needs public IP address
+- **Client Isolation**: Complete VM set dedicated per business client
 
 ### Future Phase Resources
 - **Sales Agent**: 2 vCPU, 8GB RAM, 20GB storage
@@ -181,15 +211,21 @@ AGENT_ATTESTATION_PORT=29345
 ## Security Model Summary
 
 ### Trust Boundaries
-- **Trusted**: TEE hardware, verified agents, encrypted data
-- **Untrusted**: Host OS, network, unverified agents
-- **Verification**: Hardware attestation + cryptographic proof
+- **Trusted**: TEE hardware, VMS-signed messages, verified agents, encrypted data
+- **Untrusted**: Host OS, network, unsigned messages, unverified agents
+- **Verification**: Hardware attestation + VMS cryptographic proof + message signatures
+
+### Message Verification Model
+- **Every Message Signed**: All cross-VM communication cryptographically signed with ed25519
+- **Verifiable AI Provenance**: Cryptographic proof responses came from verified TEE-protected agents
+- **Customer Receipt**: Each response includes signature and attestation verification
+- **Audit Trail**: Complete cryptographic record of all AI-generated insights
 
 ### Key Management
-- **Generation**: Keys generated within TEE, never exported
-- **Distribution**: Public keys shared via attestation quotes
-- **Communication**: All messages signed with TEE-generated private keys
-- **Rotation**: Automatic re-attestation every 4-6 hours
+- **Generation**: ed25519 keys generated within TEE via SecretVM, never exported
+- **Distribution**: Hub maintains verified public keys from spoke attestation registration
+- **Communication**: All cross-VM messages signed with TEE-generated private keys
+- **Rotation**: Weekly key rotation with graceful transition period
 
 ### Data Protection
 - **At Rest**: Encrypted within TEE
@@ -201,4 +237,4 @@ AGENT_ATTESTATION_PORT=29345
 
 *Last Updated: December 2024*  
 *Document Owner: Boardroom TEE Development Team*  
-*Purpose: Claude AI code generation reference*
+*Purpose: Claude AI code generation reference - Standalone VM Architecture*

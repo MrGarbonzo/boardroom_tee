@@ -1,17 +1,21 @@
-# Docker Deployment Guide - Boardroom TEE
+# Standalone VM Deployment Guide - Boardroom TEE
 
 ## Overview
-Complete Docker deployment guide for Boardroom TEE hub-and-spoke architecture with TEE security integration.
+Complete deployment guide for Boardroom TEE distributed architecture where each component runs on its own VM with TEE security integration. Each component is deployed independently using pre-built GHCR images.
 
 ---
 
 ## Prerequisites
 
-### System Requirements
-- **TEE Environment**: SecretVM or compatible TEE platform
-- **Hardware**: Minimum 16GB RAM, 100GB storage per client deployment
-- **Network**: Public IPv4 address, domain access for HTTPS
-- **Docker**: Docker Engine 20.10+ with TEE integration
+### Per-VM System Requirements
+- **TEE Environment**: SecretVM with Intel TDX support on each VM
+- **VMS Support**: SecretVM Verifiable Message Signing with ed25519 key generation
+- **Attestation Verification**: Port 29343 endpoint for independent client verification
+- **Hub VM**: 2 vCPU, 4GB RAM, 50GB storage
+- **Finance VM**: 2 vCPU, 8GB RAM, 40GB storage  
+- **Marketing VM**: 2 vCPU, 8GB RAM, 40GB storage
+- **Network**: Each VM needs public IPv4 address
+- **Docker**: Docker Engine 24.0+ with SecretVM integration
 
 ### Software Dependencies
 ```bash

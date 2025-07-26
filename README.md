@@ -6,20 +6,46 @@ Boardroom TEE is a hub-and-spoke AI system that provides privacy-first access to
 
 ## 🚀 Quick Deploy
 
-**Deploy complete system in under 5 minutes:**
+**Deploy distributed system across multiple VMs:**
 
+### Step 1: Deploy Hub VM
 ```bash
-# Download deployment config
-wget https://raw.githubusercontent.com/[your-org]/boardroom-tee/main/docker-compose.yaml
-
-# Set your client ID
+# On Hub VM
+wget https://raw.githubusercontent.com/[your-org]/boardroom-tee/main/hub/docker-compose.yaml
 export CLIENT_ID=your-company-name
+docker-compose up -d
+# Note the Hub VM IP address
+```
 
-# Deploy entire system
+### Step 2: Deploy Finance VM
+```bash
+# On Finance VM
+wget https://raw.githubusercontent.com/[your-org]/boardroom-tee/main/spoke_finance/docker-compose.yaml
+wget https://raw.githubusercontent.com/[your-org]/boardroom-tee/main/spoke_finance/.env.example
+# Edit .env with Hub IP address
+echo "HUB_ENDPOINT=http://[HUB_IP]:8080" > .env
 docker-compose up -d
 ```
 
-**That's it!** All container images are pre-built and automatically pulled from GitHub Container Registry.
+### Step 3: Deploy Marketing VM
+```bash
+# On Marketing VM
+wget https://raw.githubusercontent.com/[your-org]/boardroom-tee/main/spoke_marketing/docker-compose.yaml
+wget https://raw.githubusercontent.com/[your-org]/boardroom-tee/main/spoke_marketing/.env.example
+# Edit .env with Hub IP address
+echo "HUB_ENDPOINT=http://[HUB_IP]:8080" > .env
+docker-compose up -d
+```
+
+### Step 4: Update Hub with Spoke IPs
+```bash
+# On Hub VM - update .env with all spoke IPs
+echo "FINANCE_ENDPOINT=http://[FINANCE_IP]:8081" >> .env
+echo "MARKETING_ENDPOINT=http://[MARKETING_IP]:8082" >> .env
+docker-compose restart
+```
+
+**Each component runs on its own VM with complete isolation!**
 
 ## 🏗️ Architecture
 
@@ -28,15 +54,16 @@ Dynamic multi-specialist analysis without fixed pipeline overhead. Agents collab
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Hub (Brain)   │◄──►│ Finance Agent   │◄──►│ Marketing Agent │
+│   Hub VM        │◄──►│ Finance VM      │◄──►│ Marketing VM    │
 │ Llama-3.2-1B    │    │ AdaptLLM/7B     │    │ Mistral-7B      │
-│ Port: 8080      │    │ Port: 8081      │    │ Port: 8082      │
+│ [HUB_IP]:8080   │    │ [FIN_IP]:8081   │    │ [MKT_IP]:8082   │
+│ GHCR: hub       │    │ GHCR: finance   │    │ GHCR: marketing │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          ▲                       ▲                       ▲
          │                       │                       │
     ┌─────────────────────────────────────────────────────────┐
-    │              TEE Security Layer                       │
-    │         Attestation-Verified Communication            │
+    │         Cross-VM TEE Communication                     │
+    │      Manual IP Configuration via .env Files           │
     └─────────────────────────────────────────────────────────┘
 ```
 
@@ -49,50 +76,74 @@ Dynamic multi-specialist analysis without fixed pipeline overhead. Agents collab
 ## 🎯 Value Proposition
 
 ### For Businesses
-- **Privacy-First**: All data processing in hardware TEE - your data never leaves secure enclaves
+- **Complete Infrastructure Isolation**: Your dedicated VMs never share resources with competitors
+- **Hardware-Guaranteed Security**: Each client gets dedicated TEE-protected infrastructure
+- **Independent Verification**: Verify our TEE deployment integrity via port 29343 attestation endpoint
+- **Verifiable AI Provenance**: Every response cryptographically signed with proof of TEE origin
 - **Multi-Specialist Intelligence**: Finance + Marketing + Sales agents collaborate like a real boardroom
 - **Complete Data Access**: Upload ALL company data - financial reports, marketing campaigns, sales pipelines
-- **Cost Efficient**: Collaborative AI analysis at fraction of consulting costs
+- **Cryptographic Audit Trail**: Complete verifiable record of all AI-generated insights
+- **Zero Trust Verification**: Clients can independently verify deployment using reproduce-mr tools
 
 ### For Developers
 - **Pre-Built Images**: No compilation needed - deploy from GitHub Container Registry
-- **TEE Security**: Hardware-guaranteed security with verifiable attestation
+- **SecretVM TEE Security**: Hardware-guaranteed security with independent attestation verification
 - **Modular Architecture**: Add new agents without touching existing code
 - **API-First**: Complete REST APIs for all components
+- **Reproducible Builds**: Clients can independently verify deployment integrity
 
 ## 📋 System Requirements
 
-### Minimum Hardware
-- **CPU**: 6 vCPU (with TEE support - Intel TDX or AMD SEV)
-- **Memory**: 20GB RAM
-- **Storage**: 100GB SSD
+### Per Client Infrastructure Requirements
+**Each business client gets dedicated VMs:**
+
+**Hub VM (Per Client):**
+- **CPU**: 2 vCPU (with TEE support - Intel TDX or AMD SEV)
+- **Memory**: 4GB RAM
+- **Storage**: 50GB SSD
 - **Network**: Public IPv4 address
 
+**Finance Agent VM (Per Client):**
+- **CPU**: 2 vCPU (with TEE support)
+- **Memory**: 8GB RAM
+- **Storage**: 40GB SSD
+- **Network**: Public IPv4 address
+
+**Marketing Agent VM (Per Client):**
+- **CPU**: 2 vCPU (with TEE support)
+- **Memory**: 8GB RAM
+- **Storage**: 40GB SSD
+- **Network**: Public IPv4 address
+
+**Total Per Client**: 3 dedicated VMs, 6 vCPU, 20GB RAM, 130GB storage
+
 ### Software Dependencies
-- **OS**: Ubuntu 22.04+ with TEE kernel support
-- **Docker**: 24.0+ with TEE integration
-- **Network**: Ports 8080-8082, 29343-29345 available
+- **OS**: Ubuntu 22.04+ with Intel TDX support
+- **TEE Platform**: SecretVM with attestation verification
+- **Docker**: Docker Engine 24.0+ with SecretVM integration
+- **Network**: Ports 8080-8082 (APIs), 29343-29345 (attestation endpoints)
+- **Verification**: Port 29343 endpoint for client attestation verification
 
 ## 🚀 Deployment Options
 
-### Option 1: Single Command Deploy (Recommended)
+### Option 1: Manual VM Deploy (Recommended)
 ```bash
-# Complete MVP deployment
-wget https://raw.githubusercontent.com/[your-org]/boardroom-tee/main/docker-compose.yaml
-export CLIENT_ID=your-company
-docker-compose up -d
+# Deploy each component to separate VMs following Quick Deploy steps above
+# Allows complete control over VM placement and networking
 ```
 
-### Option 2: Scripted Deploy
-```bash
-# Use our deployment script
-curl -sSL https://raw.githubusercontent.com/[your-org]/boardroom-tee/main/deploy.sh | bash -s your-company
-```
+### Option 2: Cloud VM Templates
+- **AWS**: Use our CloudFormation template for multi-VM deployment
+- **Azure**: ARM template for Confidential Computing VMs
+- **GCP**: Deployment Manager template with TEE support
+- **dstack**: Multi-VM TEE deployment configuration
 
-### Option 3: Cloud VM Auto-Deploy
-- **AWS**: Launch with our AMI (includes TEE support)
-- **Azure**: Deploy with Confidential Computing VMs
-- **dstack**: Use our TEE-optimized deployment
+### Option 3: Infrastructure as Code
+```bash
+# Terraform deployment
+terraform apply -var="client_id=your-company"
+# Automatically provisions all VMs and configures IP addresses
+```
 
 ## 📊 Service Endpoints
 
@@ -100,11 +151,11 @@ After deployment, access these endpoints:
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| **Hub API** | `http://localhost:8080` | Document upload, agent orchestration |
-| **Finance Agent** | `http://localhost:8081` | Financial analysis and calculations |
-| **Marketing Agent** | `http://localhost:8082` | Marketing intelligence and campaigns |
-| **Web Interface** | `http://localhost:3000` | Simple upload/query UI |
-| **Health Dashboard** | `http://localhost:8080/health` | System status monitoring |
+| **Hub API** | `http://[HUB_IP]:8080` | Document upload, agent orchestration |
+| **Finance Agent** | `http://[FINANCE_IP]:8081` | Financial analysis and calculations |
+| **Marketing Agent** | `http://[MARKETING_IP]:8082` | Marketing intelligence and campaigns |
+| **Web Interface** | `http://[HUB_IP]:3000` | Simple upload/query UI |
+| **Health Dashboard** | `http://[HUB_IP]:8080/health` | System status monitoring |
 
 ## 💡 Demo Workflow
 
@@ -121,18 +172,23 @@ After deployment, access these endpoints:
 ## 🔧 Management Commands
 
 ```bash
-# Check system health
-curl http://localhost:8080/health
+# Check system health (run on each VM)
+curl http://[HUB_IP]:8080/health
+curl http://[FINANCE_IP]:8081/health
+curl http://[MARKETING_IP]:8082/health
 
-# View logs for specific component
-docker-compose logs hub
-docker-compose logs finance-agent
-docker-compose logs marketing-agent
+# View logs (on respective VMs)
+# On Hub VM:
+docker-compose logs
+# On Finance VM:
+docker-compose logs
+# On Marketing VM:
+docker-compose logs
 
-# Stop all services
+# Stop services (on each VM individually)
 docker-compose down
 
-# Update to latest images
+# Update to latest images (on each VM)
 docker-compose pull && docker-compose up -d
 ```
 
@@ -147,15 +203,19 @@ docker-compose pull && docker-compose up -d
 ## 🔒 Security Model
 
 ### TEE Protection
-- **Hardware Attestation**: All agents run in Intel TDX/AMD SEV enclaves
-- **Verifiable Messaging**: Cryptographic proof of secure communication
-- **Data Isolation**: Complete separation between client deployments
+- **Hardware Attestation**: All agents run in Intel TDX SecretVM enclaves
+- **Independent Verification**: Clients can verify TEE integrity via port 29343 attestation endpoints
+- **Verifiable Message Signing**: Every cross-VM message cryptographically signed with ed25519
+- **Cryptographic Provenance**: Cryptographic proof that responses originated from verified TEE-protected AI agents
+- **Complete Infrastructure Isolation**: Each client gets dedicated VMs with zero shared resources
+- **Dedicated TEE Keys**: Unique cryptographic identity per client with no key sharing
+- **Reproducible Builds**: Clients can independently verify our deployment using reproduce-mr tools
 - **Zero Knowledge**: We cannot access your data even if we wanted to
 
 ### Trust Boundaries
-- ✅ **Trusted**: TEE hardware, verified agents, encrypted data
-- ❌ **Untrusted**: Host OS, network, unverified agents
-- 🔐 **Verification**: Hardware attestation + cryptographic proof
+- ✅ **Trusted**: TEE hardware, VMS-signed messages, verified agents, encrypted data
+- ❌ **Untrusted**: Host OS, network, unsigned messages, unverified agents
+- 🔐 **Verification**: Hardware attestation + VMS cryptographic proof + weekly key rotation
 
 ## 📚 Documentation
 
