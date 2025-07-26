@@ -2,43 +2,46 @@ version: '3.8'
 
 services:
   finance-agent:
-    image: finance-boardroom-tee:latest
-    container_name: boardroom-finance-agent
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/your-org/boardroom-tee-finance:latest
+    container_name: finance-agent-${CLIENT_ID:-default}
     
-    # SecretVM Verifiable Message Signing
+    # SecretVM Verifiable Message Signing (production)
     volumes:
-      - ./crypto/docker_private_key_ed25519.pem:/app/crypto/privkey.pem
-      - ./crypto/docker_public_key_ed25519.pem:/app/crypto/pubkey.pem
-      - ./crypto/docker_attestation_ed25519.txt:/app/crypto/quote.txt
-      
-      # Agent data and configuration
-      - ./data:/app/data
-      - ./logs:/app/logs
-      - ./config:/app/config
+      - ./crypto:/app/crypto  # TEE-generated keys
+      - ./data:/app/data      # Data persistence
+      - ./logs:/app/logs      # Logging
+      - ./config:/app/config  # Configuration
     
     ports:
-      - "8081:8081"      # Agent API
-      - "29344:29343"    # Attestation endpoint
+      - "8081:8081"      # Main API
+      - "29344:29344"    # Attestation endpoint
     
     environment:
+      - DEVELOPMENT_MODE=${DEVELOPMENT_MODE:-true}
+      - MOCK_TEE_ATTESTATION=${MOCK_TEE_ATTESTATION:-true}
+      - MOCK_LLM_PROCESSING=${MOCK_LLM_PROCESSING:-true}
       - AGENT_TYPE=finance
-      - AGENT_CLIENT_ID=${CLIENT_ID}
-      - HUB_ENDPOINT=${HUB_ENDPOINT:-https://hub:8080}
-      - HUB_ATTESTATION_ENDPOINT=${HUB_ATTESTATION_ENDPOINT:-https://hub:29343}
-      - AGENT_LOG_LEVEL=INFO
+      - AGENT_MODEL_NAME=AdaptLLM/finance-LLM
       - AGENT_API_PORT=8081
-      - AGENT_ATTESTATION_PORT=29343
-      - FINANCIAL_MODEL_PATH=/app/models/finance-llm
+      - AGENT_ATTESTATION_PORT=29344
+      - AGENT_MAX_MEMORY_MB=7000
+      - CLIENT_ID=${CLIENT_ID:-default}
+      - HUB_ENDPOINT=${HUB_ENDPOINT:-http://localhost:8080}
+      - HUB_ATTESTATION_ENDPOINT=${HUB_ATTESTATION_ENDPOINT:-http://localhost:29343}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
     
-    # Resource limits for medium instance
+    # Resource limits for 7B model
     deploy:
       resources:
         limits:
           cpus: '2.0'
-          memory: 4G
+          memory: 8G
         reservations:
           cpus: '1.0'
-          memory: 2G
+          memory: 4G
     
     # Health check
     healthcheck:
@@ -46,7 +49,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 90s
     
     restart: unless-stopped
     
@@ -56,4 +59,3 @@ services:
 networks:
   boardroom-network:
     driver: bridge
-    external: true

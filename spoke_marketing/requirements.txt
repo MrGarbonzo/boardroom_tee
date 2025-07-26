@@ -1,0 +1,42 @@
+# Marketing Agent Requirements - Boardroom TEE Marketing Agent
+
+# Core web framework
+fastapi==0.104.1
+uvicorn==0.24.0
+
+# LLM and ML libraries (mocked for development)
+torch==2.1.0
+transformers==4.36.0
+accelerate==0.24.1
+sentencepiece==0.1.99
+
+# Marketing analysis libraries
+numpy==1.24.3
+pandas==2.1.3
+scipy==1.11.4
+scikit-learn==1.3.2
+
+# Data analysis and visualization
+matplotlib==3.8.2
+seaborn==0.13.0
+plotly==5.17.0
+
+# HTTP client for agent communication
+aiohttp==3.9.0
+requests==2.31.0
+
+# Cryptography and security
+cryptography==41.0.7
+pydantic==2.5.0
+
+# Data processing
+openpyxl==3.1.2
+xlrd==2.0.1
+python-multipart==0.0.6
+
+# Monitoring and logging
+psutil==5.9.6
+
+# Development utilities
+pytest==7.4.3
+pytest-asyncio==0.21.1
