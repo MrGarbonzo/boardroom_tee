@@ -13,14 +13,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # In production, would download and cache Mistral-7B-Instruct-v0.3
-RUN python -c "
-import os
-os.environ['HF_HOME'] = '/app/models'
-print('Marketing model (Mistral-7B-Instruct-v0.3) cache setup complete (mocked for development)')
-"
+RUN python -c "import os; os.environ['HF_HOME'] = '/app/models'; print('Marketing model (Mistral-7B-Instruct-v0.3) cache setup complete (mocked for development)')"
 
 # Copy source code
-COPY ../src/ /app/src/
+COPY src/ /app/src/
 
 # Create necessary directories
 RUN mkdir -p /app/data /app/logs /app/crypto /app/models /app/config

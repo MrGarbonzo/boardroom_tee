@@ -13,14 +13,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # In production, would download and cache Llama-3.2-1B-Instruct
-RUN python -c "
-import os
-os.environ['HF_HOME'] = '/app/models'
-print('Hub model cache setup complete (mocked for development)')
-"
+RUN python -c "import os; os.environ['HF_HOME'] = '/app/models'; print('Hub model cache setup complete (mocked for development)')"
 
 # Copy source code
-COPY ../src/ /app/src/
+COPY src/ /app/src/
 
 # Create necessary directories
 RUN mkdir -p /app/data /app/logs /app/crypto /app/models /app/config
